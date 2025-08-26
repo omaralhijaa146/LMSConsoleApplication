@@ -1,0 +1,14 @@
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\bin\Debug\net8.0\LMSConsoleApplication.exe
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\bin\Debug\net8.0\LMSConsoleApplication.deps.json
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\bin\Debug\net8.0\LMSConsoleApplication.runtimeconfig.json
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\bin\Debug\net8.0\LMSConsoleApplication.dll
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\bin\Debug\net8.0\LMSConsoleApplication.pdb
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.AssemblyInfoInputs.cache
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.AssemblyInfo.cs
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.csproj.CoreCompileInputs.cache
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.dll
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\refint\LMSConsoleApplication.dll
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.pdb
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.genruntimeconfig.cache
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\ref\LMSConsoleApplication.dll
