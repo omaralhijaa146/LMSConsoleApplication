@@ -2,6 +2,7 @@ using LMSConsoleApplication.Data;
 using LMSConsoleApplication.Domain.Entities;
 using LMSConsoleApplication.Domain.Enums;
 using LMSConsoleApplication.Domain.Events;
+using LMSConsoleApplication.Domain.Requirements;
 using LMSConsoleApplication.Domain.Specifications;
 using LMSConsoleApplication.DTO;
 using LMSConsoleApplication.Utilties;

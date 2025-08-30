@@ -21,7 +21,7 @@ public class SchedulingService
 
     public string CreateSession(SessionDto sessionDto)
     {
-        var session = new Session(Guid.NewGuid(), Guid.Parse(sessionDto.CourseId),Guid.Parse(sessionDto.ModuleId),Guid.Parse(sessionDto.TrainerId),sessionDto.Location,sessionDto.TimeRange );
+        var session = new Session( Guid.Parse(sessionDto.CourseId),Guid.Parse(sessionDto.ModuleId),Guid.Parse(sessionDto.TrainerId),sessionDto.Location,sessionDto.TimeRange );
 
         if (!_policy.ValidateModuleAndRoomSchedule(session)&&!_policy.ValidateTrainerSessionSchedule(session))
             throw new InvalidOperationException("Session schedule is not valid");

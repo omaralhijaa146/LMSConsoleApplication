@@ -1,5 +1,6 @@
 ﻿using LMSConsoleApplication.Data;
 using LMSConsoleApplication.Domain.Entities;
+using LMSConsoleApplication.Domain.Requirements;
 using LMSConsoleApplication.Utilties;
 
 namespace LMSConsoleApplication.Services;

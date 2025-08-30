@@ -1,6 +1,9 @@
-namespace LMSConsoleApplication.Utilties;
+using LMSConsoleApplication.Domain.Entities;
 
-public interface IValidRequirement<T> where T : class
+namespace LMSConsoleApplication.Domain.Requirements;
+
+public interface IValidRequirement<T>
 {
+    public string ErrorMessage { get; }
     public bool IsMet();
 }

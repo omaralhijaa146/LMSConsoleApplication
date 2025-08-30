@@ -1,6 +1,7 @@
 using LMSConsoleApplication.Data;
 using LMSConsoleApplication.Domain.Entities;
 using LMSConsoleApplication.Domain.Events;
+using LMSConsoleApplication.Domain.Requirements;
 using LMSConsoleApplication.Domain.Specifications;
 using LMSConsoleApplication.DTO;
 using LMSConsoleApplication.Helpers;
@@ -12,6 +13,8 @@ public class CourseService
     private readonly LmsContext _lmsContext;
     private readonly IEventBuss _eventBuss;
     private readonly IClock _clock;
+    private readonly IValidator<Course> _courseValidator;
+    private readonly IValidator<Module> _moduleValidator;
     public CourseService(LmsContext lmsContext, IEventBuss eventBuss,IClock clock)
     {
         _lmsContext = lmsContext;
@@ -29,13 +32,15 @@ public class CourseService
         if(CourseExists(x=>x.Name==course.Name))
             throw new ArgumentException("Course already exists");
         
-        var courseToAdd= new Course{Description = course.Description, Name = course.Name,Id = Guid.NewGuid()};
+        var courseToAdd= new Course(course.Name, course.Description);;
         _lmsContext.Courses.Add(courseToAdd);
         return courseToAdd.Id.ToString();
     }
-
+    
     public string EditCourse(string courseId,CourseDto course)
     {
+        
+        // TODO Refactor Course update
         if(course.Id!= courseId) throw new ArgumentException("Course id does not match");
         
         if(!CourseExists(x=>x.Id==Guid.Parse(courseId))) throw new ArgumentException("Course does not exists");
@@ -44,26 +49,31 @@ public class CourseService
         
         var courseTeachers= _lmsContext.Trainers.Where(x=>x.Courses.Any(c=>c.Id==Guid.Parse(courseId))).Select(x=>new Trainer(
             x.FullName.FirstName,x.FullName.LastName,x.Email.Value)).ToList();
+        
         var courseStudents = _lmsContext.Students.Where(s => s.Enrollments.Any(x => x.CourseId == Guid.Parse(courseId))).Select(x=>x.Id).ToList();
         
-        var courseEnrollments = _lmsContext.Enrollments.Where(x=>x.CourseId==Guid.Parse(courseId)&& courseStudents.Contains(x.StudentId)).Select(x=>new Enrollment
-        {
-            Id = x.Id,
-            CourseId = x.CourseId,
-            StudentId = x.StudentId,
-            EnrolledAt = x.EnrolledAt
-        }).ToList();
+        var courseEnrollments = _lmsContext.Enrollments.Where(x=>x.CourseId==Guid.Parse(courseId)&& courseStudents.Contains(x.StudentId)).Select(x=>new Enrollment(x.CourseId,x.StudentId,x.EnrolledAt)).ToList();
+        var newCourseModules = courseToUpdate.Modules.Select(x => new Module(x.Id,x.Title,x.DurationInMinutes,x.Order,x.Completed,x.Optional,x.Session)).ToList();
+        var courseSessions= _lmsContext.Sessions.Where(x=>x.CourseId==Guid.Parse(courseId)).ToList();
+        var courseAnnouncements= _lmsContext.Announcements.Where(x=>x.CourseId==Guid.Parse(courseId)).ToList();
         
-       var newCourse = new Course{Description = course.Description, Name = course.Name,Modules = courseToUpdate.Modules.Select(x=>new Module
-       {
-           Id = x.Id,
-           DurationInMinutes = x.DurationInMinutes,
-           Order=x.Order,
-           Title = x.Title,
-           Optional = x.Optional,
-           Session = x.Session,
-       }).ToList(),Trainers = courseTeachers,Enrollments = courseEnrollments};
+       var newCourse = new Course(course.Name, course.Description);
+       
+       /*var newCourse = new Course(course.Name, course.Description,  courseTeachers,newCourseModules, courseEnrollments,courseAnnouncements,courseSessions);*/
+       
        _lmsContext.Courses.Add(newCourse);
+
+       var courseTrainersIds=courseTeachers.Select(x=>x.Id).ToList();
+       
+       _lmsContext.Trainers.Where(x=>courseTrainersIds.Contains(x.Id)).ToList().ForEach(x=>x.Courses.Add(newCourse));
+       
+       _lmsContext.Trainers.Where(x=>courseTrainersIds.Contains(x.Id)).ToList().ForEach(x=>x.Courses.Remove(courseToUpdate));
+       
+       _lmsContext.Enrollments.Where(x=>courseStudents.Contains(x.StudentId)).ToList().ForEach(x=>x.CourseId=newCourse.Id);
+
+       _lmsContext.Sessions.Where(x => x.CourseId == Guid.Parse(courseId)).ToList().ForEach(x => x = new Session(newCourse.Id,newCourse.Modules.FirstOrDefault(m=>m.Session.Id==x.Id).Id,courseTeachers.FirstOrDefault(t=>t.Id==x.TrainerId).Id,x.Location,x.TimeRange));
+       //TODO : update announcements 
+       // TODO 
        _lmsContext.Courses.Remove(courseToUpdate);
        
        return newCourse.Id.ToString();
@@ -97,6 +107,15 @@ public class CourseService
     
     public void AddModule(string courseId,Module module)
     {
+        //TODO create Module DTO
+        //TODO validate module
+        var listOfErrors=_moduleValidator.Validate(module).ToList();
+        if (listOfErrors.Any())
+        {
+            string error="";
+            throw new ArgumentException(listOfErrors.Aggregate(error, (s, s1) => error = s + s1 + "\n"));
+        }
+        
         if (string.IsNullOrWhiteSpace(module.Title))
             throw new ArgumentException("Invalid title");
         if(module.DurationInMinutes<=0)

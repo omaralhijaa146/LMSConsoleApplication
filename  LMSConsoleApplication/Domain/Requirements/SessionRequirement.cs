@@ -1,6 +1,6 @@
 ﻿using LMSConsoleApplication.Domain.Entities;
 
-namespace LMSConsoleApplication.Utilties;
+namespace LMSConsoleApplication.Domain.Requirements;
 
 public class SessionRequirement : IValidRequirement<Session>
 {
@@ -10,7 +10,11 @@ public class SessionRequirement : IValidRequirement<Session>
     {
         _firstSession = firstSession;
         _secondSession = secondSession;
+        ErrorMessage = "Sessions are overlapping";
     }
+
+    public string ErrorMessage { get; }
+
     public bool IsMet()
     {
         return _firstSession.TimeRange.IsOverlapping(_secondSession.TimeRange) && _firstSession.Location != _secondSession.Location;

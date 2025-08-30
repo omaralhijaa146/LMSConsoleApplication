@@ -1,6 +1,13 @@
 namespace LMSConsoleApplication.Domain.Entities;
 
-public class Entity:IEntity
+public abstract class Entity:IEntity
 {
-    public Guid Id { get; set; }= Guid.NewGuid();
+    protected Entity()
+    {
+        Id = Guid.NewGuid();
+    }
+
+    public Guid Id { get; set; }
+    public abstract bool IsValid();
+    public bool IsInvalid()=>!IsValid();
 }

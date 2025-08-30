@@ -1,6 +1,6 @@
 using LMSConsoleApplication.Domain.Entities;
 
-namespace LMSConsoleApplication.Utilties;
+namespace LMSConsoleApplication.Domain.Requirements;
 
 public class NotNullOrEmptyStringRequirement : IValidRequirement<FullName>
 {
@@ -10,8 +10,11 @@ public class NotNullOrEmptyStringRequirement : IValidRequirement<FullName>
     public NotNullOrEmptyStringRequirement(string text)
     {
         _text = text;
+        ErrorMessage = "Empty string is not allowed";
     }
-    
+
+    public string ErrorMessage { get; }
+
     public bool IsMet()
     {
         return !string.IsNullOrWhiteSpace(_text);

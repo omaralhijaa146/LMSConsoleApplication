@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using LMSConsoleApplication.Domain.Requirements;
 
 namespace LMSConsoleApplication.Domain.Entities;
 
@@ -9,8 +10,19 @@ public abstract class Person:Entity
     
     protected Person(string firstName,string lastName, string email)
     {
-        FullName = new FullName(firstName,lastName);
-        Email = new Email(email);
+        var fullName = new FullName(firstName,lastName);
+        var userEmail =   new Email(email);
+        FullName = fullName;
+        Email = userEmail;
+        
+        if(IsInvalid())
+            throw new ArgumentException("Person name or email cannot be empty.");
+    }
+
+    
+    public override bool IsValid()
+    {
+        return new NameRequirement(FullName).IsMet()&&new EmailRequirement(Email).IsMet();
     }
 }
 

@@ -4,6 +4,8 @@ public class Trainer : Person
 {
     public Trainer(string firstName, string lastName, string email) : base(firstName,lastName, email)
     {
+        if(IsInvalid())
+            throw new ArgumentException("Trainer name or email cannot be empty");
         Skills = new List<string>();
         AvailabilityWindows = new List<AvailabilityWindow>();
         Courses = new List<Course>();
