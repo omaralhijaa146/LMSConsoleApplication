@@ -14,6 +14,8 @@ public class RuleBuilder<T> where T : class
         _message = message;
     }
 
+    
+    
     public IValidRequirement<T> Build() =>
         new CustomRequirement<T>(_entity,_predicate, _message);
 }

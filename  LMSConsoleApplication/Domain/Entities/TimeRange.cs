@@ -19,7 +19,7 @@ public sealed record TimeRange
 
     private DateTime ValidateDate(DateTime date)
     {
-        if(new ValidDateRequirement(date).IsMet())
+        if(!new ValidDateRequirement(date).IsMet())
             throw new ArgumentException("Invalid date");
         return date;
     }

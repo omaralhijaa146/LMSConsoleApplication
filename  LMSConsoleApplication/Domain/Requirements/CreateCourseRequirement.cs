@@ -7,14 +7,14 @@ public class CreateCourseRequirement:IValidRequirement<Course>
     private readonly string _courseName;
     private readonly string _courseDescription;
     private readonly Course _course;
-    private CreateCourseRequirement()
+
+    public CreateCourseRequirement()
     {
         ErrorMessage = "Name and Description cannot be empty";
     }
     public CreateCourseRequirement(Course course):this()
     {
         _course = course;
-        ErrorMessage = "Name and Description cannot be empty";
     }
     
     public CreateCourseRequirement(string courseName,string courseDescription):this()

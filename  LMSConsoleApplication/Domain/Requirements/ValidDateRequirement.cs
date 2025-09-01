@@ -4,10 +4,14 @@ public class ValidDateRequirement:IValidRequirement<DateTime>
 {
     private readonly DateTime _date;
 
-    public ValidDateRequirement(DateTime date)
+    public ValidDateRequirement()
+    {
+        ErrorMessage = "Invalid Date Value";
+    }
+
+    public ValidDateRequirement(DateTime date):this()
     {
         _date = date;
-        ErrorMessage = "Invalid Date Value";
     }
     
     public string ErrorMessage { get; }

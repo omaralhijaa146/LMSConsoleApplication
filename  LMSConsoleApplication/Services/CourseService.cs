@@ -33,7 +33,7 @@ public class CourseService
     {
         if(CourseExists(x=>x.Name==course.Name))
             throw new ArgumentException("Course already exists");
-        var courseIsValid = _courseValidator.Validate(new Course(course.Name, course.Description)).ToList();
+        var courseIsValid = _courseValidator.ValidateWithInitializingRequirements(new Course(course.Name, course.Description)).ToList();
         if(courseIsValid.Count > 0)
             throw new ArgumentException(courseIsValid.Aggregate("",(s,s1)=>s+s1+"\n"));
         
@@ -48,7 +48,9 @@ public class CourseService
         if (courseUpdateDto.Id != courseId) throw new ArgumentException("Course id does not match");
 
         if (!CourseExists(x => x.Id == Guid.Parse(courseId))) throw new ArgumentException("Course does not exists");
-
+        var isCourseValid=_courseValidator.ValidateWithInitializingRequirements(new Course(courseUpdateDto.Name, courseUpdateDto.Description)).ToList();
+        if (isCourseValid.Count>0)
+            throw new ArgumentException(isCourseValid.Aggregate("",(s,s1)=>s+s1+"\n"));
         var courseToUpdate = _lmsContext.Courses.FirstOrDefault(c => c.Id == Guid.Parse(courseId));
        courseToUpdate.Name = courseUpdateDto.Name;
        courseToUpdate.Description = courseUpdateDto.Description;
@@ -81,7 +83,7 @@ public class CourseService
         return ListCourses(queryParam);
     }
     
-    public void AddModule(string courseId,CreateModuleDto moduleDto)
+    public string AddModule(string courseId,CreateModuleDto moduleDto)
     {
         var course = _lmsContext.Courses.FirstOrDefault(x=>x.Id==Guid.Parse(courseId));
         if(course is null)
@@ -100,6 +102,7 @@ public class CourseService
         }
         
         course?.Modules?.Add(newModule);
+        return newModule.Id.ToString();
     }
     public (string moduleId, int order) OrderModules(string courseId,string moduleId,int order)
     {

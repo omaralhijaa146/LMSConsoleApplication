@@ -6,11 +6,15 @@ public class SessionRequirement : IValidRequirement<Session>
 {
     private readonly Session _firstSession;
     private readonly Session _secondSession;
-    public SessionRequirement(Session firstSession,Session secondSession)
+
+    public SessionRequirement()
+    {
+        ErrorMessage = "Sessions are overlapping";
+    }
+    public SessionRequirement(Session firstSession,Session secondSession):this()
     {
         _firstSession = firstSession;
         _secondSession = secondSession;
-        ErrorMessage = "Sessions are overlapping";
     }
 
     public string ErrorMessage { get; }

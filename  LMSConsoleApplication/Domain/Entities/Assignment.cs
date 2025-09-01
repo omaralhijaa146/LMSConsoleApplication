@@ -20,8 +20,7 @@ public class Assignment:Entity
         Title = title;
         MaxScore = maxScore;
         DueAt = dueAt;
-        if(IsInvalid())
-            throw new ArgumentException("Invalid assignment");
+        
     }
     
     private double ValidateScore(double score)

@@ -12,3 +12,4 @@ C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\De
 C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.pdb
 C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.genruntimeconfig.cache
 C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\ref\LMSConsoleApplication.dll
+C:\Users\User\RiderProjects\ LMSConsoleApplication\ LMSConsoleApplication\obj\Debug\net8.0\LMSConsoleApplication.sourcelink.json

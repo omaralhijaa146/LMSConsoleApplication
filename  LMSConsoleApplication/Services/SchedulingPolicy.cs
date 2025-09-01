@@ -12,11 +12,7 @@ public class SchedulingPolicy:ISchedulingPolicy
     {
         _lmsContext = lmsContext;
     }
-
-    public bool ValidateOtherSessionSchedule(Session toBeScheduled)
-    {
-        throw new NotImplementedException();
-    }
+    
     
     public bool ValidateModuleAndRoomSchedule(Session toBeScheduled)
     {
@@ -54,7 +50,8 @@ public class SchedulingPolicy:ISchedulingPolicy
             return false;
 
         /*var conflict= trainer.Sessions.FirstOrDefault(x=>x.CourseId==toBeScheduled.CourseId&&!x.IsOverlapping(toBeScheduled.TimeRange));*/
-        
+        if(trainer.Sessions.Count<=0)
+            return true;
         var trainerSession = trainer.Sessions.FirstOrDefault(x => x.CourseId == toBeScheduled.CourseId);
         var trainerSessionRequirement = new SessionRequirement(trainerSession, toBeScheduled);
 

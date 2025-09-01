@@ -20,8 +20,6 @@ public class Course:Entity
     {
         Name = name;
         Description = description;
-        if(IsInvalid())
-            throw new ArgumentException("Invalid course");
         
         Trainers = new List<Trainer>();
         Modules = new List<Module>();

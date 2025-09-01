@@ -18,8 +18,7 @@ public class Announcement:Entity
         CourseId = courseId;
         Message = message;
         CreatedAt = createdAt;
-        if(IsInvalid())
-            throw new ArgumentException("Invalid announcement");
+        
     }
 
     private DateTime ValidateDate(DateTime date)
