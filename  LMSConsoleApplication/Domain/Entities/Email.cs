@@ -6,15 +6,20 @@ namespace LMSConsoleApplication.Domain.Entities;
 
 public record Email
 {
-    public string Value { get;}
+    private string _email;
+    public string Value { get=>_email;
+        init => _email = ValidateEmail(value);
+    }
     public Email(string email)
     {
         Value = email;
     }
 
-    public bool IsValid()
+    private string ValidateEmail(string email)
     {
-        return new EmailRequirement(Value).IsMet();
+        if(!new EmailRequirement(email).IsMet())
+            throw new ArgumentException("Email cannot be empty.");
+        return email;
     }
     
 }

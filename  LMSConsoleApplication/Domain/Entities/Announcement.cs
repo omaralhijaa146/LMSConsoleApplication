@@ -4,6 +4,15 @@ namespace LMSConsoleApplication.Domain.Entities;
 
 public class Announcement:Entity
 {
+    private Guid _courseId;
+    private string _message;
+    private DateTime _createdAt;
+    
+    public Guid CourseId { get=>_courseId; set=>_courseId=ValidateId(value); }
+    public string Message { get=>_message; set=>_message=ValidateString(value);}
+    public DateTime CreatedAt { get=>_createdAt; set=>_createdAt=ValidateDate(value); }
+
+    
     public Announcement(Guid courseId, string message, DateTime createdAt)
     {
         CourseId = courseId;
@@ -13,10 +22,20 @@ public class Announcement:Entity
             throw new ArgumentException("Invalid announcement");
     }
 
+    private DateTime ValidateDate(DateTime date)
+    {
+        if(!new ValidDateRequirement(date).IsMet())
+            throw new ArgumentException("Invalid date");
+        return date;
+    }
+    private string ValidateString(string value)
+    {
+        if(!new NotNullOrEmptyStringRequirement(value).IsMet())
+            throw new ArgumentException("Invalid value");
+        return value;
+    }
+    
 
-    public Guid CourseId { get; }
-    public string Message { get;}
-    public DateTime CreatedAt { get; }
     public override bool IsValid()
     {
         return new ValidGuidIdRequirement(CourseId).IsMet()&&

@@ -1,6 +1,6 @@
 using LMSConsoleApplication.DTO;
 
-namespace LMSConsoleApplication.Services;
+namespace LMSConsoleApplication.DTO;
 
 public class CourseDto
 {

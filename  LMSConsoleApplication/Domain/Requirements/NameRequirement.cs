@@ -10,6 +10,12 @@ public class NameRequirement : IValidRequirement<FullName>
     public NameRequirement(FullName fullName)
     {
         _fullName = fullName;
+        ErrorMessage = "Name cannot be empty";
+    }
+
+    public NameRequirement(string firstName, string lastName) : this(new FullName(firstName, lastName))
+    {
+        
     }
 
     public string ErrorMessage { get; }

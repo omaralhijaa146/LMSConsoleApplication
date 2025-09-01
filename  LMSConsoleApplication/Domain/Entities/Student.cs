@@ -5,6 +5,11 @@ namespace LMSConsoleApplication.Domain.Entities;
 
 public class Student : Person
 {
+    private StudentStatus _status;
+    
+    public StudentStatus Status { get=>_status; set=> _status= ValidateStatus(value); }
+    public List<Enrollment> Enrollments { get; set; }
+    
     public Student(string firstName,string lastName, string email,StudentStatus status) : base(firstName,lastName, email)
     {
         if (IsInvalid())
@@ -14,7 +19,10 @@ public class Student : Person
         Enrollments = new List<Enrollment>();
     }
 
-    public StudentStatus Status { get; set; }
-    public List<Enrollment> Enrollments { get; set; }
-    
+    private StudentStatus ValidateStatus(StudentStatus status)
+    {
+        if(!Enum.IsDefined(typeof(StudentStatus),status))
+            throw new ArgumentException("Invalid status");
+        return status;
+    }
 }

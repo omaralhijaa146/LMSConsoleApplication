@@ -16,4 +16,6 @@ public class Trainer : Person
     public List<AvailabilityWindow> AvailabilityWindows { get; set; }
     public List<Course>? Courses { get; set; }
     public List<Session>? Sessions { get; set; }
+    
+    
 }

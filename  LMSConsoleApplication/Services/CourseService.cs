@@ -27,56 +27,30 @@ public class CourseService
         return _lmsContext.Courses.Any(condition);
     }
     
-    public string CreateCourse(CourseDto course)
+    public string CreateCourse(CreateCourseDto course)
     {
         if(CourseExists(x=>x.Name==course.Name))
             throw new ArgumentException("Course already exists");
+        var courseIsValid = _courseValidator.Validate(new Course(course.Name, course.Description)).ToList();
+        if(courseIsValid.Count > 0)
+            throw new ArgumentException(courseIsValid.Aggregate("",(s,s1)=>s+s1+"\n"));
         
-        var courseToAdd= new Course(course.Name, course.Description);;
+        var courseToAdd= new Course(course.Name, course.Description);
         _lmsContext.Courses.Add(courseToAdd);
         return courseToAdd.Id.ToString();
     }
-    
-    public string EditCourse(string courseId,CourseDto course)
+
+    public string EditCourse(string courseId, UpdateCourseDto courseUpdateDto)
     {
-        
-        // TODO Refactor Course update
-        if(course.Id!= courseId) throw new ArgumentException("Course id does not match");
-        
-        if(!CourseExists(x=>x.Id==Guid.Parse(courseId))) throw new ArgumentException("Course does not exists");
-        
-        var courseToUpdate = _lmsContext.Courses.FirstOrDefault(c=>c.Id==Guid.Parse(courseId));
-        
-        var courseTeachers= _lmsContext.Trainers.Where(x=>x.Courses.Any(c=>c.Id==Guid.Parse(courseId))).Select(x=>new Trainer(
-            x.FullName.FirstName,x.FullName.LastName,x.Email.Value)).ToList();
-        
-        var courseStudents = _lmsContext.Students.Where(s => s.Enrollments.Any(x => x.CourseId == Guid.Parse(courseId))).Select(x=>x.Id).ToList();
-        
-        var courseEnrollments = _lmsContext.Enrollments.Where(x=>x.CourseId==Guid.Parse(courseId)&& courseStudents.Contains(x.StudentId)).Select(x=>new Enrollment(x.CourseId,x.StudentId,x.EnrolledAt)).ToList();
-        var newCourseModules = courseToUpdate.Modules.Select(x => new Module(x.Id,x.Title,x.DurationInMinutes,x.Order,x.Completed,x.Optional,x.Session)).ToList();
-        var courseSessions= _lmsContext.Sessions.Where(x=>x.CourseId==Guid.Parse(courseId)).ToList();
-        var courseAnnouncements= _lmsContext.Announcements.Where(x=>x.CourseId==Guid.Parse(courseId)).ToList();
-        
-       var newCourse = new Course(course.Name, course.Description);
-       
-       /*var newCourse = new Course(course.Name, course.Description,  courseTeachers,newCourseModules, courseEnrollments,courseAnnouncements,courseSessions);*/
-       
-       _lmsContext.Courses.Add(newCourse);
 
-       var courseTrainersIds=courseTeachers.Select(x=>x.Id).ToList();
-       
-       _lmsContext.Trainers.Where(x=>courseTrainersIds.Contains(x.Id)).ToList().ForEach(x=>x.Courses.Add(newCourse));
-       
-       _lmsContext.Trainers.Where(x=>courseTrainersIds.Contains(x.Id)).ToList().ForEach(x=>x.Courses.Remove(courseToUpdate));
-       
-       _lmsContext.Enrollments.Where(x=>courseStudents.Contains(x.StudentId)).ToList().ForEach(x=>x.CourseId=newCourse.Id);
+        if (courseUpdateDto.Id != courseId) throw new ArgumentException("Course id does not match");
 
-       _lmsContext.Sessions.Where(x => x.CourseId == Guid.Parse(courseId)).ToList().ForEach(x => x = new Session(newCourse.Id,newCourse.Modules.FirstOrDefault(m=>m.Session.Id==x.Id).Id,courseTeachers.FirstOrDefault(t=>t.Id==x.TrainerId).Id,x.Location,x.TimeRange));
-       //TODO : update announcements 
-       // TODO 
-       _lmsContext.Courses.Remove(courseToUpdate);
-       
-       return newCourse.Id.ToString();
+        if (!CourseExists(x => x.Id == Guid.Parse(courseId))) throw new ArgumentException("Course does not exists");
+
+        var courseToUpdate = _lmsContext.Courses.FirstOrDefault(c => c.Id == Guid.Parse(courseId));
+       courseToUpdate.Name = courseUpdateDto.Name;
+       courseToUpdate.Description = courseUpdateDto.Description;
+       return courseToUpdate.Id.ToString();
     }
 
     public Paging<CourseDto> ListCourses(QueryParams queryParam)
@@ -105,32 +79,25 @@ public class CourseService
         return ListCourses(queryParam);
     }
     
-    public void AddModule(string courseId,Module module)
+    public void AddModule(string courseId,CreateModuleDto moduleDto)
     {
-        //TODO create Module DTO
-        //TODO validate module
-        var listOfErrors=_moduleValidator.Validate(module).ToList();
+        var course = _lmsContext.Courses.FirstOrDefault(x=>x.Id==Guid.Parse(courseId));
+        if(course is null)
+            throw new ArgumentException("Course does not exists");
+        
+        var moduleExists= course?.Modules?.FirstOrDefault(x=>x.Title==moduleDto.Title&&x.Order==moduleDto.Order);
+        if(moduleExists is not null)
+            throw new ArgumentException("Module already exists");
+
+        var newModule = new Module(moduleDto.Title, moduleDto.DurationInMinutes, moduleDto.Order, moduleDto.Completed);
+        var listOfErrors=_moduleValidator.Validate(newModule).ToList();
         if (listOfErrors.Any())
         {
             string error="";
             throw new ArgumentException(listOfErrors.Aggregate(error, (s, s1) => error = s + s1 + "\n"));
         }
         
-        if (string.IsNullOrWhiteSpace(module.Title))
-            throw new ArgumentException("Invalid title");
-        if(module.DurationInMinutes<=0)
-            throw new InvalidOperationException("Module duration must be greater than 0 minutes");
-        var originalModule = _lmsContext.Courses.FirstOrDefault(x => x.Id == Guid.Parse(courseId))?.Modules?.FirstOrDefault(x=>x.Title==module.Title);
-        
-        if(originalModule!=null) throw new InvalidOperationException("Module already exists");
-        
-        var course = _lmsContext.Courses.FirstOrDefault(x=>x.Id==Guid.Parse(courseId));
-        var moduleInTheSameOrder = course?.Modules?.FirstOrDefault(x=>x.Order==module.Order);
-        
-        if(moduleInTheSameOrder!=null)
-            throw new InvalidOperationException("Module with the same order already exists");
-        
-        course?.Modules?.Add(module);
+        course?.Modules?.Add(newModule);
     }
     public (string moduleId, int order) OrderModules(string courseId,string moduleId,int order)
     {
@@ -140,14 +107,21 @@ public class CourseService
             {
                 if (condition(m))
                     m.Order--;
+                else
+                    m.Order++;
             }
         }
         
         var course = RecordsFinder.FindEntity(_lmsContext.Courses, Guid.Parse(courseId));
+        
         if(course is null) throw new ArgumentException("Course does not exists");
+        if(course.Modules is null) throw new ArgumentException("Course has no modules");
+        
         var orderedModules=course.Modules.OrderBy(x => x.Order).ToList();
-        var module = orderedModules.FirstOrDefault(x => x.Id == Guid.Parse(moduleId));
+        var module = orderedModules?.FirstOrDefault(x => x.Id == Guid.Parse(moduleId));
+        
         if(module is null) throw new ArgumentException("Module does not exists");
+        
         var currentOrder = module.Order;
         
         var newOrder = Math.Max(1,Math.Min(order,course.Modules.Count));
@@ -157,19 +131,9 @@ public class CourseService
         if (newOrder <currentOrder)
         {
             ShiftModules(orderedModules,m=>m.Order >= newOrder && m.Order < currentOrder);
-            /*foreach (var m in orderedModules)
-            {
-                if(m.Order >= newOrder && m.Order < currentOrder)
-                    m.Order++;
-            }*/
         }else if (newOrder > currentOrder)
         {
             ShiftModules(orderedModules,m=>m.Order > currentOrder && m.Order <= newOrder);
-            /*foreach (var m in orderedModules)
-            {
-                if (m.Order > currentOrder && m.Order <= newOrder)
-                    m.Order--;
-            }*/
         }
         module.Order = newOrder;
         course.Modules = orderedModules.OrderBy(x=>x.Order).ToList();
@@ -189,11 +153,7 @@ public class CourseService
         
         if((bool)course.Trainers?.Any(x=>x.Id==Guid.Parse(trainerId)))
             throw new InvalidOperationException("Trainer already assigned");
-
-        /*var schedulingPolicy = new SchedulingPolicy(_lmsContext);
-        var isValid= schedulingPolicy.ValidateTrainerSessionSchedule(course.Sessions.FirstOrDefault(x=>x.TrainerId==Guid.Parse(trainerId)&&x.CourseId==Guid.Parse(courseId)));
-        if(!isValid)
-            throw new ArgumentException("cannot schedule trainer");*/
+        
         course?.Trainers?.Add(trainerRegistered);
         trainerRegistered?.Courses?.Add(course);
         
