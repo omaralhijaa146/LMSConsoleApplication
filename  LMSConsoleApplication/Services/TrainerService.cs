@@ -1,5 +1,6 @@
 using LMSConsoleApplication.Data;
 using LMSConsoleApplication.Domain.Entities;
+using LMSConsoleApplication.Domain.Requirements;
 using LMSConsoleApplication.Domain.Specifications;
 using LMSConsoleApplication.DTO;
 
@@ -9,6 +10,8 @@ public class TrainerService
 {
     private readonly LmsContext _lmsContext;
     private readonly IEventBuss _eventBuss;
+    private readonly IValidator<Trainer> _trainerValidator;
+    private readonly IValidator<AvailabilityWindow> _availabilityWindowValidator;
     private readonly IClock _clock;
     
     public TrainerService(LmsContext context, IEventBuss eventBuss,IClock clock)
@@ -43,8 +46,11 @@ public class TrainerService
         var trainerAlreadyExists= _lmsContext.Trainers.Any(x=>x.Email.Value==trainerDto.Email.Value);
         if (trainerAlreadyExists)
             throw new ArgumentException("Trainer already exists");
-        
-        var trainerToAdd= new Trainer(trainerDto.FullName.FirstName,trainerDto.FullName.LastName,trainerDto.Email.Value);
+        var trainerToAdd = new Trainer(trainerDto.FullName.FirstName, trainerDto.FullName.LastName,
+            trainerDto.Email.Value);
+        var isTrainerValid=_trainerValidator.Validate(trainerToAdd).ToList();
+        if (isTrainerValid.Count > 0)
+            throw new ArgumentException(isTrainerValid.Aggregate("",(s,s1)=>s+s1+"\n"));
         _lmsContext.Trainers.Add(trainerToAdd);
     }
 
@@ -55,14 +61,19 @@ public class TrainerService
         if (availabilityAlreadyExists.HasValue && availabilityAlreadyExists.Value)
             throw new ArgumentException("Trainer availability window already exists");
         
-        var overlaps= _lmsContext.Trainers.FirstOrDefault(x=>x.Id==Guid.Parse(trainerId))?.AvailabilityWindows.Any(x=>x.Start < windowDto.End && x.End > windowDto.Start);
+        /*var overlaps= _lmsContext.Trainers.FirstOrDefault(x=>x.Id==Guid.Parse(trainerId))?.AvailabilityWindows.Any(x=>x.Start < windowDto.End && x.End > windowDto.Start);
         if (overlaps.HasValue && overlaps.Value)
-            throw new InvalidOperationException("Trainer availability window overlaps with another");
+            throw new InvalidOperationException("Trainer availability window overlaps with another");*/
         var availabilityToBeAdded = new AvailabilityWindow
         {
             End = windowDto.End,
             Start = windowDto.Start
         };
+        
+        var isValidAvailabilityWindow= _availabilityWindowValidator.Validate(availabilityToBeAdded).ToList();
+        if(isValidAvailabilityWindow.Count>0)
+            throw new ArgumentException(isValidAvailabilityWindow.Aggregate("",(s,s1)=>s+s1+"\n"));
+        
         _lmsContext.Trainers.FirstOrDefault(x=>x.Id==Guid.Parse(trainerId))?.AvailabilityWindows.Add(availabilityToBeAdded);
     }
     
@@ -74,7 +85,7 @@ public class TrainerService
         _lmsContext.Trainers.FirstOrDefault(x=>x.Id==Guid.Parse(trainerId))?.AvailabilityWindows.Remove(availabilityToBeDeleted);
     }
     
-    public List<SessionDto> ListTrainerSessions(QueryParams queryParam,string trainerId)
+    public List<SessionDto> ListTrainerSessions(string trainerId)
     {
         var trainer = _lmsContext.Trainers.FirstOrDefault(x=>x.Id==Guid.Parse(trainerId));
         if (trainer is null)
