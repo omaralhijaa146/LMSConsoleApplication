@@ -17,11 +17,12 @@ public class StudentEnrollmentService
         private readonly IValidator<Student> _studentValidator;
         private readonly IClock _clock;
 
-        public StudentEnrollmentService(LmsContext lmsContext, IEventBuss eventBus,IClock clock)
+        public StudentEnrollmentService(LmsContext lmsContext, IEventBuss eventBus,IClock clock,IValidator<Student> student)
         {
             _lmsContext = lmsContext;
             _eventBus = eventBus;
             _clock = clock;
+            _studentValidator=student;
         }
 
         public string CreateStudent(StudentDto studentDto)

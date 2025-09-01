@@ -15,11 +15,13 @@ public class CourseService
     private readonly IClock _clock;
     private readonly IValidator<Course> _courseValidator;
     private readonly IValidator<Module> _moduleValidator;
-    public CourseService(LmsContext lmsContext, IEventBuss eventBuss,IClock clock)
+    public CourseService(LmsContext lmsContext, IEventBuss eventBuss,IClock clock,IValidator<Course> courseValidator,IValidator<Module> moduleValidator)
     {
         _lmsContext = lmsContext;
         _eventBuss = eventBuss;
         _clock = clock;
+        _courseValidator = courseValidator;
+        _moduleValidator = moduleValidator;
     }
 
     private bool CourseExists(Func<Course, bool> condition)

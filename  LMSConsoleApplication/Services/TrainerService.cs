@@ -14,11 +14,13 @@ public class TrainerService
     private readonly IValidator<AvailabilityWindow> _availabilityWindowValidator;
     private readonly IClock _clock;
     
-    public TrainerService(LmsContext context, IEventBuss eventBuss,IClock clock)
+    public TrainerService(LmsContext context, IEventBuss eventBuss,IClock clock,IValidator<AvailabilityWindow> availabilityWindowValidator,IValidator<Trainer> trainerValidator)
     {
         _lmsContext = context;
         _eventBuss = eventBuss;
         _clock = clock;
+        _trainerValidator=trainerValidator;
+        _availabilityWindowValidator=availabilityWindowValidator;
     }
 
 
