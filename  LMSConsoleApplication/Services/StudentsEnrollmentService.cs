@@ -14,6 +14,7 @@ public class StudentEnrollmentService
     {
         private readonly LmsContext _lmsContext;
         private readonly IEventBuss _eventBus;
+        private readonly IValidator<Student> _studentValidator;
         private readonly IClock _clock;
 
         public StudentEnrollmentService(LmsContext lmsContext, IEventBuss eventBus,IClock clock)
@@ -25,18 +26,17 @@ public class StudentEnrollmentService
 
         public string CreateStudent(StudentDto studentDto)
         {
-            var nameRequirement = new NameRequirement(studentDto.FullName);
-            var emailRequirement = new EmailRequirement(studentDto.Email);
-           
-            if (!nameRequirement.IsMet()||!emailRequirement.IsMet())
-                throw new ArgumentException("Student name or email cannot be empty.");
-
+            
             if (_lmsContext.Students.Any(s => s.Email.Value == studentDto.Email.Value))
                 throw new ArgumentException("A student with the provided email already exists.");
-
-            var student = new Student(studentDto.FullName.FirstName,studentDto.FullName.LastName, studentDto.Email.Value, studentDto.Status);
-            _lmsContext.Students.Add(student);
-            return student.Id.ToString();
+            var studentToAdd = new Student(studentDto.FullName.FirstName, studentDto.FullName.LastName,
+                studentDto.Email.Value, studentDto.Status);
+            var isValidStudent= _studentValidator.Validate(studentToAdd).ToList();
+            if(isValidStudent.Count>0)
+                throw new ArgumentException(isValidStudent.Aggregate("",(s,s1)=>s+s1+"\n"));
+            
+            _lmsContext.Students.Add(studentToAdd);
+            return studentToAdd.Id.ToString();
         }
 
         public Paging<StudentDto> ListStudents(QueryParams queryParam)
@@ -72,16 +72,12 @@ public class StudentEnrollmentService
 
             if (_lmsContext.Enrollments.Any(e => e.StudentId == Guid.Parse(studentId) && e.CourseId == Guid.Parse(courseId)))
                 throw new InvalidOperationException("The student is already enrolled in this course.");
-
-            var enrollment = new Enrollment
-            {
-                Id = Guid.NewGuid(),
-                StudentId = Guid.Parse(studentId),
-                CourseId = Guid.Parse(courseId),
-                EnrolledAt = _clock.UtcNow
-            };
+            
+            
+            var enrollment = new Enrollment(Guid.Parse(studentId), Guid.Parse(courseId), _clock.UtcNow);
+            
             _lmsContext.Enrollments.Add(enrollment);
-            _lmsContext.Courses.FirstOrDefault(c => c.Id == Guid.Parse(courseId))?.Enrollments.Add(enrollment);
+            _lmsContext.Courses.FirstOrDefault(c => c.Id == Guid.Parse(courseId))?.Enrollments?.Add(enrollment);
             _lmsContext.Students.FirstOrDefault(s => s.Id == Guid.Parse(studentId))?.Enrollments.Add(enrollment);
             _eventBus.Publish(new StudentEnrolled(studentId, courseId, DateTime.UtcNow));
             return (studentId,courseId);
@@ -98,7 +94,9 @@ public class StudentEnrollmentService
             
             if (courseAndEnrollment == null)
                 throw new ArgumentException("Course not found.");
-
+            if(courseAndEnrollment.Modules is null || !courseAndEnrollment.Modules.Any())
+                throw new ArgumentException("Course has no modules");
+            
             var totalModules = courseAndEnrollment.Modules.Count;
             var completedModules = courseAndEnrollment.Modules.Count(m => m.Completed==ModuleCompleteStatus.Completed);
             var progress = totalModules > 0 ? (completedModules * 100.0 / totalModules) : 0;
