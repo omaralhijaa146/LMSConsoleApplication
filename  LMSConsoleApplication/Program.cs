@@ -6,6 +6,7 @@ using LMSConsoleApplication.Domain.Requirements;
 using LMSConsoleApplication.DTO;
 using LMSConsoleApplication.Helpers;
 using LMSConsoleApplication.Services;
+using LMSConsoleApplication.Views;
 
 namespace LMSConsoleApplication;
 
@@ -13,7 +14,7 @@ class Program
 {
     static void Main(string[] args)
     {
-        var eventBus = new EventBuss();
+        /*var eventBus = new EventBuss();
         var notifier = new Notifier();
         var clock = new SystemClock();
         var courseValidator = new Validator<Course>().AddRule<CreateCourseRequirement>();
@@ -108,368 +109,142 @@ class Program
         //     Location = "1",
         //     TimeRange = new TimeRange(DateTime.Now.AddMinutes(60),DateTime.Now.AddMinutes(-20))
         // });
-       context.Courses.FirstOrDefault(x=>x.Id==Guid.Parse(courseId)).Sessions.ForEach(x=>Console.WriteLine(x.TimeRange.Start));;
-       
-    }
-}
-public static class UserInputReader
-{
-    public static string ReadUserInput()
-        => Console.ReadLine()??"";
-    
-    public static string ReadUserInput(string message)
-        => Console.ReadLine()??"";
-    
-}
+       context.Courses.FirstOrDefault(x=>x.Id==Guid.Parse(courseId)).Sessions.ForEach(x=>Console.WriteLine(x.TimeRange.Start));;*/
 
-public static class InputParser
-{
-    public static bool TryParseInt(string input, out int result)
-    {
-        return int.TryParse(input, out result);
-    }
-    
-    public static bool TryParseGuid(string input, out Guid result)
-    {
-        return Guid.TryParse(input, out result);
-    }
-
-    public static bool TryParseDateTime(string input, out DateTime result)
-    {
-        return DateTime.TryParse(input, out result);
+        var appManager = new AppManager();
+        appManager.Run();
     }
 }
 
-// Big boss these views to handle menus 
-public abstract class Menu
+public class MainMenuController
 {
-    public string Title { get; set; }
-    protected Dictionary<int, Delegate> _options;
+    private readonly MainMenu _mainMenu;
 
-    public virtual void Display()
+    public MainMenuController(Action studentManagementController)
     {
-        while (true)
-        {
-            DisplayMenu();
-            if (int.TryParse(Console.ReadLine(), out int input) && input == 0) break;
-            HandleInput(input);
-        }
+        _mainMenu = new MainMenu(studentManagementController, () => { }, () => { }, () => { });
     }
 
-    protected virtual void HandleInput(int input)
+    
+    public void Display()
     {
-        if (_options.TryGetValue(input, out var action))
-        {
-            var convertedAction =(Action)action;
-            convertedAction();
-        }
+        _mainMenu.Display();
     }
-
-    protected abstract void DisplayMenu();
+    
 }
 
-
-
-public class MainMenu : Menu
+public class StudentManagementMenuController
 {
-    public MainMenu()
-    {
-        Title = "Main Menu";
-        _options = new Dictionary<int,Delegate>
-        {
-            { 1, () => { Console.WriteLine("Student Management");} },
-            { 2, () => { Console.WriteLine("Trainer Management");} },
-            { 3, ()=> { Console.WriteLine("Course Management");} },
-            { 5, () => { Console.WriteLine("Scheduling Management");} }
-        };
-    }
-    
-
-    protected override void DisplayMenu()
-    {
-       
-    }
-}
-
-public class PaginationView<T>  : Menu where T : class
-{
-
-    PaginationView(string title = "Pagination View")
-    {
-        Title = title;
-        _options = new Dictionary<int, Delegate>
-        {
-            {1,ListItems}, {1,SearchItems}
-        };
-        
-    }
-
-    public void ListItems(Func<QueryParams,Paging<T>> getItemsAction,Action<T> printItemsAction)
-    {
-        var isExit= false;
-        while (!isExit)
-        {
-            var isValidPageSize=InputParser.TryParseInt(UserInputReader.ReadUserInput("Enter how many items you wish to have: "), out int itemsPerPage);
-            if (!isValidPageSize)
-            {
-                Console.WriteLine("Invalid Number"); 
-                Console.WriteLine("Enter a valid Number");
-            }
-            
-            if(!TryParseUserPageSizeInput(itemsPerPage,out var queryParams))
-                continue;
-           
-            isExit= ListItemsOperation(getItemsAction,printItemsAction,queryParams,false);;
-        }
-    }
-
-    public void SearchItems(Func<QueryParams,Paging<T>> getItemsAction,Action<T> printItemsAction,string searchIndecatorMessage)
-    {
-        var isExit= false;
-        while (!isExit)
-        {
-            var isValidPageSize=InputParser.TryParseInt(UserInputReader.ReadUserInput("Enter how many items you wish to have: "), out int itemsPerPage);
-            if (!isValidPageSize)
-            {
-                Console.WriteLine("Invalid Number"); 
-                Console.WriteLine("Enter a valid Number");
-            }
-            
-            if(!TryParseUserPageSizeInput(itemsPerPage,out var queryParams))
-                continue;
-            var whatToBeSearchedBy= UserInputReader.ReadUserInput(searchIndecatorMessage);
-            if (string.IsNullOrWhiteSpace(whatToBeSearchedBy))
-            {
-                Console.WriteLine("Invalid Input");
-                Console.WriteLine("Enter a valid Input");
-                continue;
-            }
-            queryParams.Search= whatToBeSearchedBy;
-            isExit= ListItemsOperation(getItemsAction,printItemsAction,queryParams,true);;
-        }
-    }
-
-    private bool TryParseUserPageSizeInput(int pageSize,out QueryParams validatedQueryParams)
-    {
-        
-        var queryParams= new QueryParams();
-        queryParams.PageNumber = 1;
-        queryParams.PageSize = pageSize;
-        if (queryParams.PageSize <= 0)
-        {
-            validatedQueryParams = new QueryParams();
-            return false;
-        }
-        validatedQueryParams= queryParams;
-        return true;
-    }
-
-    private bool ListItemsOperation(Func<QueryParams,Paging<T>> getItemsAction,Action<T> printItemsAction, QueryParams queryParams ,bool isSearch=false)
-    {
-        var newQueryParam = new QueryParams { PageNumber = queryParams.PageNumber, PageSize = queryParams.PageSize, Search = isSearch?queryParams.Search:"" }; 
-        
-        var isExit= false;
-        while (!isExit)
-        {
-            
-            var result = getItemsAction(newQueryParam);
-            
-            Console.WriteLine(result.TotalItems); 
-            
-            Console.WriteLine(result.PageNumber); 
-            
-            Console.WriteLine(result.PageSize);
-
-            foreach (var item in result.Result)
-            {
-                printItemsAction(item);
-            } 
-            
-            Console.WriteLine("Press 0 to exit or press any other number to continue");
-            
-            var userInput= UserInputReader.ReadUserInput();
-
-            if (!InputParser.TryParseInt(userInput, out int input))
-            {
-                Console.WriteLine("Invalid input"); Console.WriteLine("Enter a valid input"); continue;
-            }
-
-            switch (input)
-            {
-                case 0: 
-                    isExit = true; 
-                    break; 
-                default:
-                    newQueryParam.PageNumber++;
-                    break;
-            }
-        }
-
-        return false;
-    } 
-    
-    
-    
-    protected override void DisplayMenu() { throw new NotImplementedException(); }
-}
-
-public class StudentManagementMenu : Menu
-{
+    private readonly StudentManagementMenu _studentManagementMenu;
     private readonly StudentEnrollmentService _studentEnrollmentService;
-    public StudentManagementMenu()
+    private readonly CourseService _courseService;
+
+    public StudentManagementMenuController(StudentEnrollmentService studentEnrollmentService,CourseService courseService)
     {
-        Title = "Student Management";
-        _options = new Dictionary<int, Delegate>
+        _studentEnrollmentService = studentEnrollmentService;
+        _courseService = courseService;
+        var studentManagementHandlers = new StudentManagementHandlers
         {
-            { 1,  CreateStudent },
-            { 2, ListStudents },
-            { 3, SearchStudentByEmail },
-            { 4, EnrollStudentInCourse },
-            { 5, ViewStudentProgressInCode },
+            PaginationHandlers = new PaginationViewHandlers<StudentDto>
+            {
+                GetItemsAction = _studentEnrollmentService.ListStudents,
+                PrintItemsAction = (std) => {Console.WriteLine($"Student {std.FullName.FirstName} {std.FullName.LastName} {std.Email.Value} with Id {std.Id}"); },
+                SearchIndecatorMessage = "Search by student email"
+            },
+            CoursePaginationHandlers = new PaginationViewHandlers<CourseDto>
+            {
+                GetItemsAction = _courseService.ListCourses,
+                PrintItemsAction = (course) => {Console.WriteLine($"Course {course.Name} with Id {course.Id}"); },
+                SearchIndecatorMessage = "Search by course name"
+            },
+            CreateStudent = _studentEnrollmentService.CreateStudent,
+            EnrollmentAction = _studentEnrollmentService.EnrollStudentInCourse,
+            ViewStudentProgressInCode = _studentEnrollmentService.ViewStudentProgressInCode,
         };
-        _studentEnrollmentService = new StudentEnrollmentService(new LmsContext(),new EventBuss(),new SystemClock(),new Validator<Student>());
-    }
-    
-    protected override void DisplayMenu()
-    {
-        throw new NotImplementedException();
-    }
-
-
-    public void CreateStudent(Func<StudentDto,string> createStudent)
-    {
-        Console.WriteLine("Create Student");
-        var studentEmail= UserInputReader.ReadUserInput("Enter Student Email");
-        var studentFirstName= UserInputReader.ReadUserInput("Enter Student First Name");
-        var studentLastName= UserInputReader.ReadUserInput("Enter Student Last Name");
-        var studentDto= new StudentDto
-        {
-            Email = new Email(studentEmail),
-            FullName = new FullName(studentFirstName,studentLastName),
-            Status = StudentStatus.Active
-        };
-        
-        createStudent(studentDto);
-    }
-
-    public void ListStudents()
-    {
-        Console.WriteLine("List Students");
-        var queryParam = new QueryParams
-        {
-            PageNumber = 1,
-            PageSize = 5,
-        };
-        var isExit= false;
-        while (!isExit)
-        {
-            var isValidPageSize=InputParser.TryParseInt(UserInputReader.ReadUserInput("Enter how many items you wish to have: "), out int itemsPerPage);
-            if (!isValidPageSize && itemsPerPage <= 0)
-            {
-                Console.WriteLine("Invalid Page Size");
-                Console.WriteLine("Enter a valid Page Size");
-                continue;
-            }
-            queryParam.PageSize= itemsPerPage;
-            var result = _studentEnrollmentService.ListStudents(queryParam);
-            Console.WriteLine(result.TotalItems);
-            Console.WriteLine(result.PageNumber);
-            Console.WriteLine(result.PageSize);
-            foreach (var studentDto in result.Result)
-            {
-                Console.WriteLine(studentDto.FullName);
-            }
-            Console.WriteLine("Press 0 to exit or press any other number to continue");
-
-            var userInput= UserInputReader.ReadUserInput();
-            
-            if (!InputParser.TryParseInt(userInput, out int input))
-            {
-                Console.WriteLine("Invalid input");
-                Console.WriteLine("Enter a valid input");
-                continue;
-            }
-            switch (input)
-            {
-                case 0: 
-                    isExit = true;
-                    break;
-                default:
-                    queryParam.PageNumber++;
-                    break;
-            }
-        }
-    }
-    
-    public void SearchStudentByEmail()
-    {
-        
-        
-        var queryParam = new QueryParams
-        {
-            PageNumber = 1,
-            PageSize = 5,
-        };
-        
-        var isExit= false;
-        while (!isExit)
-        {
-            var emailToBeSearched= UserInputReader.ReadUserInput("Enter Student Email To search It: ");
-            queryParam.Search= emailToBeSearched;
-            var isValidPageSize=InputParser.TryParseInt(UserInputReader.ReadUserInput("Enter how many items you wish to have: "), out int itemsPerPage);
-            queryParam.PageSize= itemsPerPage;
-            if (!isValidPageSize && itemsPerPage <= 0)
-            {
-                Console.WriteLine("Invalid Page Size");
-                Console.WriteLine("Enter a valid Page Size");
-                continue;
-            }
-            var result = _studentEnrollmentService.ListStudents(queryParam);
-            Console.WriteLine(result.TotalItems);
-            Console.WriteLine(result.PageNumber);
-            Console.WriteLine(result.PageSize);
-            foreach (var studentDto in result.Result)
-            {
-                Console.WriteLine(studentDto.FullName);
-            }
-            Console.WriteLine("Press 0 to exit or press any other number to continue");
-
-            var userInput= UserInputReader.ReadUserInput();
-            
-            if (!InputParser.TryParseInt(userInput, out int input))
-            {
-                Console.WriteLine("Invalid input");
-                Console.WriteLine("Enter a valid input");
-                continue;
-            }
-            switch (input)
-            {
-                case 0: 
-                    isExit = true;
-                    break;
-                default:
-                    queryParam.PageNumber++;
-                    break;
-            }
-        }
-    }
-
-    public void EnrollStudentInCourse()
-    {
-        Console.WriteLine("Enroll Student In Course");
-        Console.WriteLine("Search or choose the student you wish to enroll by copying and pasting the student id:");
-        SearchStudentByEmail();
-        var studentId= UserInputReader.ReadUserInput("Enter Student Id: ");
-        
-        _studentEnrollmentService.EnrollStudentInCourse();
+        _studentManagementMenu = new StudentManagementMenu(studentManagementHandlers);
     }
     
     
-    public void ViewStudentProgressInCode()
+    public void Display()
     {
-        Console.WriteLine("View Student Progress In Code");
+        _studentManagementMenu.Display();
     }
 }
+
+public class AppManager
+{
+    private  LmsContext _lmsContext;
+    private  StudentEnrollmentService _studentEnrollmentService;
+    private  SchedulingService _schedulingService;
+    private  CourseService _courseService;
+    private  TrainerService _trainerService;
+    private  IEventBuss _eventBuss;
+    private  IClock _clock;
+    private  INotifier _notifier;
+    private  IValidator<Course> _courseValidator;
+    private  IValidator<Module> _moduleValidator;
+    private  IValidator<Trainer> _trainerValidator;
+    private  IValidator<Student> _studentValidator;
+    private  IValidator<Session> _sessionValidator;
+    private  IValidator<AvailabilityWindow> _availabilityWindowValidator;
+    private  IValidator<Enrollment> _enrollmentValidator;
+    private MainMenuController _mainMenuController;
+    private StudentManagementMenuController _studentManagementMenuController;
+    
+    public AppManager()
+    {
+        InitilizeEventingUtils();
+        InitializeValidators();
+        InitializeContextAndServices();
+        AddSubscribes();
+        InitializeControllers();
+    }
+    
+    public void Run()
+    {
+        _mainMenuController.Display();
+    }
+
+
+    private void InitializeControllers()
+    {
+        _studentManagementMenuController = new StudentManagementMenuController(_studentEnrollmentService,_courseService);;
+        _mainMenuController = new MainMenuController(_studentManagementMenuController.Display);
+    }
+
+    private void AddSubscribes()
+    {
+        _eventBuss.Subscribe<TrainerAssignedToCourse>(x=>_notifier.InfoNotify($"Trainer {x.TrainerId} assigned to course {x.CourseId}"));
+        _eventBuss.Subscribe<StudentEnrolled>(x=>_notifier.InfoNotify($"Trainer {x.CourseId} assigned to course {x.CourseId}"));
+        _eventBuss.Subscribe<SessionScheduled>(x=>_notifier.InfoNotify($"Session Scheduled {x.sessionDto.CourseId}  {x.sessionDto.Id} {x.sessionDto.ModuleId} {x.sessionDto.TrainerId}"));
+    }
+
+    private void InitilizeEventingUtils()
+    {
+        _eventBuss = new EventBuss();
+        _clock = new SystemClock();
+        _notifier = new Notifier();
+    }
+    private void InitializeValidators()
+    {
+        _courseValidator = new Validator<Course>().AddRule<CreateCourseRequirement>();
+        _studentValidator = new Validator<Student>().AddRule<StudentRequirement>();
+        _sessionValidator = new Validator<Session>().AddRule<SessionRequirement>();
+        _trainerValidator = new Validator<Trainer>().AddRule<TrainerRequirement>();
+        _moduleValidator= new Validator<Module>().AddRule<ModuleRequirement>(); ;
+    }
+    private void InitializeContextAndServices()
+    {
+        _lmsContext = new LmsContext();
+        _courseService = new CourseService(_lmsContext,_eventBuss,_clock,_courseValidator,_moduleValidator);
+        _trainerService = new TrainerService(_lmsContext,_eventBuss,_clock,_availabilityWindowValidator,_trainerValidator);
+        _studentEnrollmentService = new StudentEnrollmentService(_lmsContext,_eventBuss,_clock,_studentValidator);
+        _schedulingService = new SchedulingService(_lmsContext,_eventBuss,_clock,_sessionValidator);
+        
+    }
+    
+}
+
 
 
 

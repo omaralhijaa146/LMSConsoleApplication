@@ -46,6 +46,7 @@ public class StudentEnrollmentService
             var evaluatedQuery = SpecificationEvaluator<Student>.GetQuery(_lmsContext.Students, studentSpecs);
             var students = evaluatedQuery.Select(x=>new StudentDto
             {
+                Id = x.Id.ToString(),
                 FullName = x.FullName,
                 Email = x.Email,
                 Status = x.Status

@@ -8,7 +8,7 @@ public class LmsContext
     {
         Students = new List<Student>();
         Trainers = new List<Trainer>();
-        Courses = new List<Course>();
+        Courses = new List<Course>(){new Course("CSharp","C# is a programming language")};
         Sessions = new List<Session>();
         Enrollments = new List<Enrollment>();
         Assignments = new List<Assignment>();
