@@ -153,7 +153,7 @@ public class StudentManagementMenuController
             },
             CoursePaginationHandlers = new PaginationViewHandlers<CourseDto>
             {
-                GetItemsAction = _courseService.ListCourses,
+                GetItemsAction = _courseService.SearchCourses,
                 PrintItemsAction = (course) => {Console.WriteLine($"Course {course.Name} with Id {course.Id}"); },
                 SearchIndecatorMessage = "Search by course name"
             },
